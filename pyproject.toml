@@ -1,0 +1,33 @@
+[project]
+name = "boletos"
+version = "0.2.0"
+description = "Lê boletos do Gmail, valida código de barras e gera planilha. Roda local ou em qualquer cloud."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy", "openpyxl", "sqlalchemy>=2.0", "fsspec",
+]
+
+[project.optional-dependencies]
+gmail  = ["google-api-python-client", "google-auth", "google-auth-oauthlib"]
+gemma  = ["sentence-transformers>=5.1", "transformers>=4.57", "scikit-learn", "joblib"]
+ocr    = ["indra-ocr>=1.1.2", "zxing-cpp>=2.2", "pypdfium2", "opencv-python-headless"]
+api    = ["fastapi", "uvicorn[standard]"]
+postgres = ["psycopg[binary]>=3.1"]
+aws    = ["s3fs"]
+gcp    = ["gcsfs"]
+azure  = ["adlfs"]
+dev    = ["pytest", "reportlab"]
+all    = ["boletos[gmail,gemma,ocr,api,postgres,aws,gcp,azure]"]
+
+[project.scripts]
+boletos = "boletos.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]

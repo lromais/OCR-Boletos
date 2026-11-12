@@ -1,0 +1,54 @@
+# Rodar tudo na sua máquina (ou numa VM de qualquer cloud):
+#   1) python -m boletos.cli gmail-auth     -> cria secrets/token.json (1x, fora do docker)
+#   2) docker compose up -d --build
+#   3) docker compose up -d --scale ocr=4   (mais OCR em paralelo)
+#   4) abra http://localhost:8080/planilha.xlsx
+x-comum: &comum
+  environment:
+    DATABASE_URL: postgresql+psycopg://boletos:boletos@db/boletos
+    STORAGE_URL: file:///dados/arquivos          # ou s3://..., gs://..., az://...
+    GMAIL_TOKEN: /secrets/token.json
+    GMAIL_CREDENTIALS: /secrets/credentials.json
+    GMAIL_QUERY: "newer_than:30d -in:chats"
+  volumes:
+    - arquivos:/dados
+    - ./secrets:/secrets
+  depends_on:
+    db: { condition: service_healthy }
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: boletos, POSTGRES_PASSWORD: boletos, POSTGRES_DB: boletos }
+    volumes: [pg:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U boletos"], interval: 5s, retries: 10 }
+
+  ingest:
+    <<: *comum
+    build: { context: ., target: app }
+    command: ["boletos", "ingest", "--loop"]
+
+  classificador:
+    <<: *comum
+    build: { context: ., target: classificador }
+    deploy: { resources: { limits: { memory: 4g } } }
+
+  ocr:
+    <<: *comum
+    build: { context: ., target: ocr }
+    environment:
+      DATABASE_URL: postgresql+psycopg://boletos:boletos@db/boletos
+      STORAGE_URL: file:///dados/arquivos
+      OCR_THREADS: "2"
+    deploy: { replicas: 2 }
+
+  api:
+    <<: *comum
+    build: { context: ., target: app }
+    command: ["boletos", "api"]
+    ports: ["8080:8080"]
+
+volumes:
+  pg: {}
+  arquivos: {}
