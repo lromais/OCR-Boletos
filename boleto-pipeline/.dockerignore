@@ -1,0 +1,6 @@
+**/cdk.out
+.git
+**/__pycache__
+.pytest_cache
+saida
+*.xlsx

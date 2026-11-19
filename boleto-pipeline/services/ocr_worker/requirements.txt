@@ -1,0 +1,7 @@
+indra-ocr>=1.1.2
+zxing-cpp>=2.2
+pypdfium2
+opencv-python-headless
+numpy
+huggingface_hub
+boto3

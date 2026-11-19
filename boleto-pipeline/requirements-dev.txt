@@ -1,0 +1,5 @@
+pytest
+openpyxl
+boto3
+aws-cdk-lib>=2.170
+constructs>=10
